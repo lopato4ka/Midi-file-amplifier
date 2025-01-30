@@ -1,0 +1,4 @@
+Flask==2.0.3
+mido==1.2.10
+python-rtmidi==1.5.2
+Werkzeug==2.0.3

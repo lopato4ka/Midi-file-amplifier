@@ -1,0 +1,132 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI Volume Booster</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .drop-zone.dragover {
+            border-color: #28a745;
+            background-color: #e9f5e9;
+        }
+        .custom-file-input:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Усиление громкости MIDI</h3>
+                    </div>
+                    <div class="card-body">
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                {% for message in messages %}
+                                <div class="alert alert-danger">{{ message }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="mb-3">
+                                <label class="form-label">Множитель громкости (1-10):</label>
+                                <input type="number" name="multiplier" 
+                                       class="form-control" value="5" min="1" max="10" required>
+                            </div>
+
+                            <div class="drop-zone mb-3" id="dropZone">
+                                <p class="text-muted">Перетащите MIDI-файл сюда или</p>
+                                <label class="btn btn-primary custom-file-input">
+                                    Выберите файл
+                                    <input type="file" name="file" hidden accept=".mid,.midi">
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">
+                                Усилить громкость
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Исправленный JavaScript
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.querySelector('input[type="file"]');
+        const form = document.getElementById('uploadForm');
+
+        // Предотвращаем стандартное поведение браузера
+        document.addEventListener('dragover', e => e.preventDefault());
+        document.addEventListener('drop', e => e.preventDefault());
+
+        // Обработчики для зоны дропа
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length && allowedFile(files[0].name)) {
+                // Создаем новый DataTransfer для корректной установки файлов
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(files[0]);
+                fileInput.files = dataTransfer.files;
+                
+                // Триггерим событие изменения
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        // Валидация имени файла
+        function allowedFile(filename) {
+            return filename.match(/\.(mid|midi)$/i);
+        }
+
+        // Обновление интерфейса при выборе файла
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length && allowedFile(fileInput.files[0].name)) {
+                document.querySelector('.text-muted').textContent = 
+                    `Выбран файл: ${fileInput.files[0].name}`;
+            } else {
+                document.querySelector('.text-muted').textContent = 
+                    "Некорректный файл. Используйте .mid или .midi";
+                fileInput.value = '';
+            }
+        });
+
+        // Ручная отправка формы
+        form.addEventListener('submit', (e) => {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Пожалуйста, выберите файл!');
+            }
+        });
+    </script>
+</body>
+</html>
